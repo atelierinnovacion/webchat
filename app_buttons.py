@@ -176,13 +176,31 @@ if final_input:
     st.session_state.messages.append({"role": "user", "content": final_input})
     
     # Process the bot response
+    # Process the bot response
     if st.session_state.waiting_for_email:
         user_email = final_input.strip()
         unanswered_question = st.session_state.waiting_for_email
         
-        log_entry = f"Date: {datetime.now()} | Email: {user_email} | Question: {unanswered_question}\n"
-        with open("leads_log.txt", "a", encoding="utf-8") as f:
-            f.write(log_entry)
+        # --- SEND LEAD DIRECTLY TO GOOGLE SHEETS VIA FORM BRIDGE ---
+        import requests
+        
+        # 1. Paste your secret formResponse URL here:
+        FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScWL62CTOoP_dRlw_XhU2Wgd6IdA9P6vhmvXRT5XXG3HiUNNg/formresponse"
+        
+        # 2. Map your entry IDs to the user's data (Replace numbers with your actual entry IDs)
+        form_data = {
+            "entry.1621915346": user_email,          # Replace with your Email entry ID
+            "entry.409076594": unanswered_question   # Replace with your Question entry ID
+        }
+        
+        try:
+            # Silently submit the form data in the background
+            requests.post(FORM_URL, data=form_data, timeout=5)
+        except Exception as e:
+            # Fallback backup to the text file just in case the network blips
+            with open("leads_log.txt", "a", encoding="utf-8") as f:
+                f.write(f"Date: {datetime.now()} | Email: {user_email} | Question: {unanswered_question} (Form Fail)\n")
+        # -----------------------------------------------------------
             
         bot_response = "Gracias! Nos contactaremos contigo, que disfrutes la feria."
         st.session_state.waiting_for_email = None
