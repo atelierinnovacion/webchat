@@ -147,7 +147,9 @@ if not st.session_state.waiting_for_email:
     if st.button("✨ Quiero más info & Updates de próximos eventos", key="btn_more_info", use_container_width=True):
         button_pressed = "more info"
 
+# =====================================================================
 # 5. CHAT LOGIC (Using a standard layout box instead of a floating input)
+# =====================================================================
 st.write("---")
 st.write("💬 **Chat Room:**")
 
@@ -184,27 +186,47 @@ if final_input:
             
         bot_response = "Gracias! Nos contactaremos contigo, que disfrutes la feria."
         st.session_state.waiting_for_email = None
-    # ... (Inside Section 5, find the block where the bot handles a fresh question)
+
+    # --- THIS IS THE UPDATED ACCENT-PROOF MATCHING BLOCK ---
     else:
-        clean_input = final_input.lower().strip()
-                
-        # NEW: Catch if they clicked the button or typed "more info"
+        # Helper function to strip accents and special characters cleanly (e.g., ñ -> n, á -> a)
+        import unicodedata
+        def clean_string(text):
+            text = str(text).lower().strip()
+            text = ''.join(
+                c for c in unicodedata.normalize('NFD', text)
+                if unicodedata.category(c) != 'Mn'
+            )
+            return text
+
+        # 1. Clean the user's input (whether typed or button clicked)
+        clean_input = clean_string(final_input)
+        
+        # 2. Check if they clicked the button or typed "more info"
         if "more info" in clean_input or clean_input == "info":
             bot_response = "Con gusto te enviaremos más info! Por favor, déjanos tu email abajo y nos contactaremos."
-            # We flag that we are waiting for an email, and tag the context as "Requested More Info"
             st.session_state.waiting_for_email = "Requested General More Info"
                 
         else:
-            # Your existing fuzzy matching logic handles all other questions:
-            questions_list = list(qa_pairs.keys())
-            best_match = process.extractOne(clean_input, questions_list, scorer=fuzz.WRatio, score_cutoff=70)
+            # 3. Build a temporary dictionary with completely flattened/cleaned keys
+            flat_qa_pairs = {clean_string(k): v for k, v in qa_pairs.items()}
+            flat_questions = list(flat_qa_pairs.keys())
+            
+            # 4. Perform the fuzzy match on the cleaned lists
+            best_match = process.extractOne(
+                clean_input, 
+                flat_questions, 
+                scorer=fuzz.WRatio, 
+                score_cutoff=60  # Lowered slightly to capture close matches perfectly
+            )
                     
             if best_match:
-               matched_question = best_match[0]
-               bot_response = qa_pairs[matched_question]
+                matched_flat_question = best_match[0]
+                # Pull the original perfect answer string using our matched flat key
+                bot_response = flat_qa_pairs[matched_flat_question]
             else:
-               bot_response = "Ups, no tengo respuesta para esa pregunta, pero si me dejas tu email trataremos de responderte a la brevedad!"
-               st.session_state.waiting_for_email = final_input # Saves the exact weird question they asked
+                bot_response = f"Ups, no tengo respuesta para '{final_input}', pero si me dejas tu email trataremos de responderte a la brevedad!"
+                st.session_state.waiting_for_email = final_input # Saves the exact weird question they asked
 
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
     st.rerun()
