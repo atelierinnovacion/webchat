@@ -156,8 +156,12 @@ if final_input:
             "entry.409076594": unanswered_question   # Replace with your Question ID
         }
         try:
-            requests.post(FORM_URL, data=form_data, timeout=5)
-        except:
+            # Send data and capture the server response
+            response = requests.post(FORM_URL, data=form_data, timeout=5)
+            # This will print "Status: 200" in your log if successful!
+            print(f"--- Google Form Status: {response.status_code} ---") 
+        except Exception as e:
+            print(f"--- Form Submission Error: {str(e)} ---")
             with open("leads_log.txt", "a", encoding="utf-8") as f:
                 f.write(f"Date: {datetime.now()} | Email: {user_email} | Question: {unanswered_question} (Form Fail)\n")
             
