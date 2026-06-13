@@ -132,7 +132,7 @@ placeholder_text = "Type your email here..." if st.session_state.waiting_for_ema
 with st.form(key="chat_form", clear_on_submit=True):
     chat_cols = st.columns([4, 1])
     with chat_cols[0]:
-        user_typed_input = st.text_input("", placeholder=placeholder_text, label_visibility="collapsed")
+        user_typed_input = st.text_input("Chat Input", placeholder=placeholder_text, label_visibility="collapsed")
     with chat_cols[1]:
         submit_button = st.form_submit_button(label="Send", use_container_width=True)
 
