@@ -52,9 +52,8 @@ def get_csv_url(url):
 
 CSV_URL = get_csv_url(SHEET_URL)
 
-@st.cache_data(ttl=60) # Caches for 1 minute for local testing, change to 600 later!
+@st.cache_data(ttl=10) # Set to 10 seconds for fast debugging!
 def load_faqs_from_sheets():
-    # Emergency fallback so the app works even if offline or Google drops the ball
     fallback_faqs = {
         "viña concha y toro": "Vinos disponibles: Casillero del Diablo, Don Melchor.",
         "viña san pedro": "Vinos disponibles: Castillo de Molina, Gato Negro."
@@ -64,21 +63,39 @@ def load_faqs_from_sheets():
         return fallback_faqs
 
     try:
-        # Added a 5-second connection timeout so it never hangs indefinitely
         df = pd.read_csv(CSV_URL, storage_options={"timeout": 5})
         
-        # Clean up column spaces and lowercase them
+        # 1. Clean the column names aggressively (lowercase, strip whitespace)
         df.columns = [str(col).strip().lower() for col in df.columns]
         
-        # Check if we have at least 2 columns to use
-        if len(df.columns) >= 2:
-            q_col = 'question' if 'question' in df.columns else df.columns[0]
-            a_col = 'answer' if 'answer' in df.columns else df.columns[1]
-            return dict(zip(df[q_col].astype(str), df[a_col].astype(str)))
+        # --- DEBUG HELPER ---
+        # This will print the exact columns Python sees into your Streamlit logs
+        # st.sidebar.write("Python detected columns:", list(df.columns))
+        # --------------------
+
+        # 2. Explicitly scan for the column names instead of column position
+        q_col = None
+        a_col = None
+        
+        for col in df.columns:
+            if 'question' in col or 'pregunta' in col:
+                q_col = col
+            if 'answer' in col or 'respuesta' in col:
+                a_col = col
+
+        # 3. Fallback to positions only if explicit names aren't matched
+        if not q_col and len(df.columns) > 0: q_col = df.columns[0]
+        if not a_col and len(df.columns) > 1: a_col = df.columns[1]
+
+        if q_col and a_col:
+            # Drop any rows where the question or answer is completely blank (NaN)
+            df = df.dropna(subset=[q_col, a_col])
+            
+            # Map them securely to strings
+            return dict(zip(df[q_col].astype(str).str.strip(), df[a_col].astype(str).str.strip()))
         
         return fallback_faqs
     except Exception as e:
-        # If Google rejects it, return fallback instead of crashing the Streamlit server
         return fallback_faqs
 
 # Dynamically build your qa_pairs dictionary safely!
