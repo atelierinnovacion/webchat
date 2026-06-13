@@ -185,7 +185,7 @@ if final_input:
         import requests
         
         # 1. Paste your secret formResponse URL here:
-        FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScWL62CTOoP_dRlw_XhU2Wgd6IdA9P6vhmvXRT5XXG3HiUNNg/formresponse"
+        FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScWL62CTOoP_dRlw_XhU2Wgd6IdA9P6vhmvXRT5XXG3HiUNNg/formResponse"
         
         # 2. Map your entry IDs to the user's data (Replace numbers with your actual entry IDs)
         form_data = {
