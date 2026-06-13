@@ -150,7 +150,7 @@ if final_input:
         unanswered_question = st.session_state.waiting_for_email
         
         # Google Form Integration
-        FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScWL62CTOoP_dRlw_XhU2Wgd6IdA9P6vhmvXRT5XXG3HiUNNg/formResponsee" # Replace with your real URL
+        FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScWL62CTOoP_dRlw_XhU2Wgd6IdA9P6vhmvXRT5XXG3HiUNNg/formResponse" # Replace with your real URL
         form_data = {
             "entry.1621915346": user_email,          # Replace with your Email ID
             "entry.409076594": unanswered_question   # Replace with your Question ID
